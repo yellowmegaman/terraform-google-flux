@@ -169,8 +169,8 @@ resource "kubernetes_service" "memcached" {
       name = "memcached"
     }
     port {
-      port        = "${var.memcached_port}"
-      target_port = "${var.memcached_port}"
+      port        = var.memcached_port
+      target_port = var.memcached_port
     }
   }
 }
@@ -201,7 +201,7 @@ resource "kubernetes_deployment" "memcached" {
           args  = ["-I 5m", "-p ${var.memcached_port}"]
           image_pull_policy = "IfNotPresent"
           security_context {
-            run_as_user =  "${var.memcached_port}"
+            run_as_user =  var.memcached_port
             allow_privilege_escalation = "false"
           }
           resources {
@@ -216,11 +216,11 @@ resource "kubernetes_deployment" "memcached" {
           }
           port {
             name           = "clients"
-            container_port = "${var.memcached_port}"
+            container_port = var.memcached_port
           }
           liveness_probe {
             tcp_socket {
-              port = "${var.memcached_port}"
+              port = var.memcached_port
             }
             initial_delay_seconds = 3
             period_seconds        = 3
