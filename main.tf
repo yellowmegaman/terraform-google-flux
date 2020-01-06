@@ -92,7 +92,7 @@ resource "kubernetes_deployment" "flux" {
         automount_service_account_token = "true"
         container {
           name  = "flux"
-          image = "docker.io/weaveworks/flux:${var.flux_version}"
+          image = "fluxcd/flux:${var.flux_version}"
           args  = ["--memcached-service=", "--git-timeout=100s", "--ssh-keygen-dir=/var/fluxd/keygen", "--git-url=${var.repo}", "--git-branch=${var.cluster_name}", "--listen-metrics=:3031", "--git-poll-interval=${var.poll_interval}", "--sync-interval=${var.sync_interval}", "--sync-garbage-collection", "--git-path=${var.manifests_path}", "--git-ci-skip-message=[SKIP CI]", "--git-label=flux${var.cluster_name}", "--manifest-generation=true"]
           env {
             name = "ENVNAME"
