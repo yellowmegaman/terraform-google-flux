@@ -8,7 +8,7 @@ variable "flux_version" {
 	description = "Flux version (see https://github.com/fluxcd/flux/releases)"
 	default     = "1.17.0"
 }
-variable "memcached version" {
+variable "memcached_version" {
 	description = "Memcached version (see https://hub.docker.com/_/memcached)"
 	default     = "1.5.20"
 }
