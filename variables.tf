@@ -15,10 +15,8 @@ variable "memcached version" {
 variable "memcached_port" {
 	default = "11211"
 }
-
 variable "repo" {
 	description = "repo to sync with"
-	default     = "git@github.com:oktossm/gitops.git"
 }
 variable "poll_interval" {
 	default = "3m0s"
