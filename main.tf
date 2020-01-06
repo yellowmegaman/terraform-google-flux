@@ -2,12 +2,19 @@
 resource "kubernetes_service_account" "flux" {
   metadata {
     name = "flux"
+      labels = {
+        ip = var.ingress_ip
+      }
   }
   automount_service_account_token = "true"
 }
+
 resource "kubernetes_cluster_role" "flux" {
   metadata {
     name = "flux"
+      labels = {
+        ip = var.ingress_ip
+      }
   }
 
   rule {
@@ -21,9 +28,13 @@ resource "kubernetes_cluster_role" "flux" {
     verbs             = ["*"]
   }
 }
+
 resource "kubernetes_cluster_role_binding" "flux" {
   metadata {
     name = "flux"
+      labels = {
+        ip = var.ingress_ip
+      }
   }
   role_ref {
     api_group = "rbac.authorization.k8s.io"
@@ -36,18 +47,26 @@ resource "kubernetes_cluster_role_binding" "flux" {
     namespace = "default"
   }
 }
+
 resource "kubernetes_secret" "flux-key" {
   metadata {
     name = "flux-key"
+      labels = {
+        ip = var.ingress_ip
+      }
   }
   data = {
     "identity" = file("flux_key")
   }
 }
+
 #%# flux deployment templated
 resource "kubernetes_deployment" "flux" {
   metadata {
     name = "flux"
+      labels = {
+        ip = var.ingress_ip
+      }
   }
   spec {
     replicas = 1
@@ -73,8 +92,8 @@ resource "kubernetes_deployment" "flux" {
         automount_service_account_token = "true"
         container {
           name  = "flux"
-          image = "docker.io/weaveworks/flux:1.13.1"
-          args  = ["--memcached-service=", "--ssh-keygen-dir=/var/fluxd/keygen", "--git-url=git@github.com:oktossm/gitops.git", "--git-branch=master", "--listen-metrics=:3031", "--git-poll-interval=3m0s", "--sync-interval=3m0s", "--sync-garbage-collection", "--git-path=${var.cluster_name}", "--git-ci-skip-message=[SKIP CI]", "--git-label=fluxhere", "--manifest-generation=true"]
+          image = "docker.io/weaveworks/flux:${var.flux_version}"
+          args  = ["--memcached-service=", "--git-timeout=100s", "--ssh-keygen-dir=/var/fluxd/keygen", "--git-url=${var.repo}", "--git-branch=${var.cluster_name}", "--listen-metrics=:3031", "--git-poll-interval=${var.poll_interval}", "--sync-interval=${var.sync_interval}", "--sync-garbage-collection", "--git-path=${var.manifests_path}", "--git-ci-skip-message=[SKIP CI]", "--git-label=flux${var.cluster_name}", "--manifest-generation=true"]
           env {
             name = "ENVNAME"
             value = var.cluster_name
@@ -82,6 +101,10 @@ resource "kubernetes_deployment" "flux" {
           env {
             name = "LBIP"
             value = var.ingress_ip
+          }
+          env {
+            name = "ENVDOMAIN"
+            value = var.domain_name
           }
           volume_mount {
             name       = "git-key"
@@ -137,20 +160,26 @@ resource "kubernetes_deployment" "flux" {
 resource "kubernetes_service" "memcached" {
   metadata {
     name = "memcached"
+      labels = {
+        ip = var.ingress_ip
+      }
   }
   spec {
     selector = {
       name = "memcached"
     }
     port {
-      port        = "11211"
-      target_port = "11211"
+      port        = "${var.memcached_port}"
+      target_port = "${var.memcached_port}"
     }
   }
 }
 resource "kubernetes_deployment" "memcached" {
   metadata {
     name = "memcached"
+      labels = {
+        ip = var.ingress_ip
+      }
   }
   spec {
     replicas = 1
@@ -168,11 +197,11 @@ resource "kubernetes_deployment" "memcached" {
       spec {
         container {
           name  = "memcached"
-          image = "memcached:1.5.15"
-          args  = ["-m 512", "-I 5m", "-p 11211"]
+          image = "memcached:${var.memcached_version}"
+          args  = ["-I 5m", "-p ${var.memcached_port}"]
           image_pull_policy = "IfNotPresent"
           security_context {
-            run_as_user =  "11211"
+            run_as_user =  "${var.memcached_port}"
             allow_privilege_escalation = "false"
           }
           resources {
@@ -187,11 +216,11 @@ resource "kubernetes_deployment" "memcached" {
           }
           port {
             name           = "clients"
-            container_port = "11211"
+            container_port = "${var.memcached_port}"
           }
           liveness_probe {
             tcp_socket {
-              port = "11211"
+              port = "${var.memcached_port}"
             }
             initial_delay_seconds = 3
             period_seconds        = 3
