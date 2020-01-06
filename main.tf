@@ -56,7 +56,7 @@ resource "kubernetes_secret" "flux-key" {
       }
   }
   data = {
-    "identity" = file("flux_key")
+    "identity" = base64decode(var.flux_key)
   }
 }
 

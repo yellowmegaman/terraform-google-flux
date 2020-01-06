@@ -30,3 +30,6 @@ variable "manifests_path" {
 variable "domain_name" {
 	description = "domain name to tell flux about"
 }
+variable "flux_key" {
+	description = "repo key"
+}
