@@ -27,3 +27,6 @@ variable "sync_interval" {
 variable "manifests_path" {
 	default = "manifests"
 }
+variable "domain_name" {
+	description = "domain name to tell flux about"
+}
